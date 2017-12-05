@@ -42,7 +42,6 @@ class ProgrammaticExtensionRegistrationTests extends AbstractJupiterTestEngineTe
 		assertOneTestSucceeded(InstanceLevelExtensionRegistrationTestCase.class);
 	}
 
-	@Disabled("Disabled until feature is completed")
 	@Test
 	void classLevel() {
 		assertOneTestSucceeded(ClassLevelExtensionRegistrationTestCase.class);

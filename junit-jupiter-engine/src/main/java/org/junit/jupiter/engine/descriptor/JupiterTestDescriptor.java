@@ -13,8 +13,11 @@ package org.junit.jupiter.engine.descriptor;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static org.apiguardian.api.API.Status.INTERNAL;
+import static org.junit.platform.commons.util.AnnotationUtils.findAnnotatedFields;
 import static org.junit.platform.commons.util.AnnotationUtils.findAnnotation;
 import static org.junit.platform.commons.util.AnnotationUtils.findRepeatableAnnotations;
+import static org.junit.platform.commons.util.ReflectionUtils.isStatic;
+import static org.junit.platform.commons.util.ReflectionUtils.readFieldValue;
 
 import java.lang.reflect.AnnotatedElement;
 import java.util.Arrays;
@@ -30,6 +33,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.Extension;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.engine.execution.ConditionEvaluator;
 import org.junit.jupiter.engine.execution.JupiterEngineExecutionContext;
@@ -129,7 +133,22 @@ public abstract class JupiterTestDescriptor extends AbstractTestDescriptor
 				.flatMap(Arrays::stream)
 				.collect(toList());
 		// @formatter:on
-		return ExtensionRegistry.createRegistryFrom(existingExtensionRegistry, extensionTypes);
+		ExtensionRegistry newRegistry = ExtensionRegistry.createRegistryFrom(existingExtensionRegistry, extensionTypes);
+
+		if (annotatedElement instanceof Class) {
+			Class<?> clazz = (Class<?>) annotatedElement;
+			// @formatter:off
+			findAnnotatedFields(clazz, RegisterExtension.class, field -> isStatic(field)).stream()
+				.map(field -> readFieldValue(clazz, field.getName(), null))
+				.filter(Optional::isPresent)
+				.map(Optional::get)
+				.filter(Extension.class::isInstance)
+				.map(Extension.class::cast)
+				.forEach(ext -> newRegistry.registerExtension(ext, clazz));
+			// @formatter:on
+		}
+
+		return newRegistry;
 	}
 
 	/**
