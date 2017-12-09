@@ -125,6 +125,7 @@ public class ClassTestDescriptor extends JupiterTestDescriptor {
 		ExtensionRegistry registry = populateNewExtensionRegistryFromExtendWith(this.testClass,
 			context.getExtensionRegistry());
 
+		registerExtensionsFromFields(testClass, registry, null);
 		registerBeforeEachMethodAdapters(registry);
 		registerAfterEachMethodAdapters(registry);
 
